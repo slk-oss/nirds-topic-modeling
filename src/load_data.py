@@ -19,9 +19,8 @@ def get_connection():
 
 
 def load_csv(filepath, nrows=10000):
-    df = pd.read_csv(filepath, nrows=nrows, usecols=["title", "text", "topic", "date"])
+    df = pd.read_csv(filepath, nrows=nrows, usecols=["title", "text", "topic"])
     df = df.dropna(subset=["text"])
-    df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
     df["word_count"] = df["text"].str.split().str.len()
     return df
 
@@ -41,7 +40,7 @@ def insert_documents(cur, df, topic_map):
         (
             topic_map.get(r.topic),
             r.title,
-            None if pd.isnull(r.date) else r.date,
+            None,
             r.text,
             r.word_count,
         )
