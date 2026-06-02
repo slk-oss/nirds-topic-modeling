@@ -1,8 +1,9 @@
 # Данные
 data/
-*.csv
 *.gz
 *.json
+*.csv
+!reports/*.csv
 
 # Секреты
 .env
