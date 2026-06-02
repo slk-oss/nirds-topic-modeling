@@ -5,3 +5,9 @@ nltk
 psycopg2-binary
 matplotlib
 jupyter
+
+gensim            
+pymorphy2         
+seaborn            
+plotly            
+python-dotenv 
