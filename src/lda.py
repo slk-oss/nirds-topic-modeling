@@ -16,22 +16,15 @@ import pyLDAvis
 import pyLDAvis.gensim_models
 from dotenv import load_dotenv
 
+from config.stopwords import MODEL_EXTRA
+
 load_dotenv()
 
 matplotlib.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["figure.dpi"] = 120
 
 EXCLUDED_TOPICS = {"Бизнес"}
-
-EXTRA_STOPWORDS = {
-    "заявить", "отметить", "рассказать", "сообщить", "сказать",
-    "сообщаться", "опубликовать", "стать", "мочь", "получить",
-    "произойти", "находиться", "январь", "февраль", "март",
-    "апрель", "май", "июнь", "июль", "август", "сентябрь",
-    "октябрь", "ноябрь", "декабрь", "ранее", "однако",
-    "несколько", "должный", "летний",
-}
-
+MIN_DOC_TOKENS = 10
 K_MIN, K_MAX = 5, 20
 
 
@@ -53,17 +46,28 @@ def load_lemmas():
     rows = cur.fetchall()
     conn.close()
 
+    total_raw = len(rows)
+    n_excluded = sum(1 for topic, _ in rows if topic in EXCLUDED_TOPICS)
+    n_short = sum(
+        1 for topic, lemmas in rows
+        if topic not in EXCLUDED_TOPICS and len(lemmas) < MIN_DOC_TOKENS
+    )
+
     topics, texts = [], []
     for topic, lemmas in rows:
         if topic in EXCLUDED_TOPICS:
             continue
-        filtered = [l for l in lemmas if l not in EXTRA_STOPWORDS]
+        if len(lemmas) < MIN_DOC_TOKENS:
+            continue
+        filtered = [l for l in lemmas if l not in MODEL_EXTRA]
         if filtered:
             topics.append(topic)
             texts.append(filtered)
 
-    print(f"Корпус: {len(texts)} документов, "
-          f"{len(set(topics))} рубрик (исключено: {EXCLUDED_TOPICS})")
+    print(f"Загружено из БД:         {total_raw}")
+    print(f"Исключено (рубрики):     {n_excluded}  {EXCLUDED_TOPICS}")
+    print(f"Удалено (< {MIN_DOC_TOKENS} токенов):  {n_short}")
+    print(f"Итого документов:        {len(texts)}, {len(set(topics))} рубрик")
     return topics, texts
 
 

@@ -9,19 +9,14 @@ import pymorphy2
 import nltk
 from dotenv import load_dotenv
 
+from config.stopwords import PREPROCESS_EXTRA
+
 load_dotenv()
 
 nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords as nltk_stopwords
 
-_NEWS_WORDS = {
-    "сообщать", "рассказывать", "заявлять", "добавлять", "отмечать",
-    "уточнять", "напоминать", "подчёркивать", "указывать", "передавать",
-    "сообщение", "заявление", "слово", "год", "день", "время",
-    "также", "это", "свой", "который", "весь", "такой", "этот",
-}
-
-STOPWORDS = set(nltk_stopwords.words("russian")) | _NEWS_WORDS
+STOPWORDS = set(nltk_stopwords.words("russian")) | PREPROCESS_EXTRA
 
 _URL_RE = re.compile(r"https?://\S+|www\.\S+")
 _NONALPHA_RE = re.compile(r"[^а-яёa-z\s]")

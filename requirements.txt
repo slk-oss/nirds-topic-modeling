@@ -10,4 +10,5 @@ gensim
 pymorphy2         
 seaborn            
 plotly            
-python-dotenv 
+python-dotenv
+python-docx

@@ -10,23 +10,15 @@ import seaborn as sns
 from sklearn.feature_extraction.text import TfidfVectorizer
 from dotenv import load_dotenv
 
+from config.stopwords import MODEL_EXTRA
+
 load_dotenv()
 
 matplotlib.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["figure.dpi"] = 120
 
-EXTRA_STOPWORDS = {
-    # глаголы речи
-    "заявить", "отметить", "рассказать", "сообщить", "сказать",
-    "сообщаться", "опубликовать",
-    # общие глаголы
-    "стать", "мочь", "получить", "произойти", "находиться",
-    # месяцы
-    "январь", "февраль", "март", "апрель", "май", "июнь",
-    "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь",
-    # дискурсивные маркеры
-    "ранее", "однако", "несколько", "должный",
-}
+EXCLUDED_TOPICS = {"Бизнес"}
+MIN_DOC_TOKENS = 10
 
 
 def load_corpus():
@@ -43,8 +35,15 @@ def load_corpus():
         ORDER BY t.name
     """, conn)
     conn.close()
+    total_raw = len(df)
+    df = df[~df["topic"].isin(EXCLUDED_TOPICS)]
+    after_excl = len(df)
+    df = df[df["lemmas"].apply(len) >= MIN_DOC_TOKENS].reset_index(drop=True)
+    after_len = len(df)
+    print(f"Загружено: {total_raw} → исключено рубрик {total_raw - after_excl} "
+          f"→ короткие документы удалены {after_excl - after_len} "
+          f"→ итого {after_len} документов, {df['topic'].nunique()} рубрик")
     df["text"] = df["lemmas"].apply(" ".join)
-    print(f"Загружено: {len(df)} документов, {df['topic'].nunique()} рубрик")
     return df
 
 
@@ -54,7 +53,7 @@ def build_tfidf(df):
         max_df=0.85,
         max_features=5000,
         sublinear_tf=True,
-        stop_words=list(EXTRA_STOPWORDS),
+        stop_words=list(MODEL_EXTRA),
     )
     X = vectorizer.fit_transform(df["text"])
     vocab_size = len(vectorizer.get_feature_names_out())
